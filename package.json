@@ -1,0 +1,12 @@
+{
+  "name": "cartguard",
+  "version": "1.0.0",
+  "description": "CartGuard: an AI shopping agent that can only spend inside rules you set, paying through PayPal (sandbox).",
+  "license": "MIT",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/policy.test.js test/agent.test.js test/flow.test.js test/paypal.test.js"
+  },
+  "engines": { "node": ">=18" }
+}
