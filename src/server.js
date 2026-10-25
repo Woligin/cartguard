@@ -84,6 +84,7 @@ async function handle(req, res) {
       const p = { id: 'p_' + crypto.randomBytes(4).toString('hex'), createdAt: now(), text, aiSource: pl.choice ? pl.choice.source : pl.request.source,
         parsed: { query: pl.request.query, maxPrice: pl.request.maxPrice, quantity: pl.request.quantity }, options: pl.options.map(o => ({ id: o.id, title: o.title, price: o.price })), history: [] };
       log(p, 'request received', text);
+      if (pl.request.note) log(p, 'AI note', pl.request.note);
       log(p, 'agent parsed request', `source=${pl.request.source}; query="${pl.request.query.trim().slice(0, 80)}"; maxPrice=${pl.request.maxPrice}; qty=${pl.request.quantity}`);
       if (!pl.item) {
         p.status = 'no_match'; p.total = 0; p.item = null; p.decision = 'none'; p.reasons = ['no catalog item matches the request'];
@@ -91,6 +92,7 @@ async function handle(req, res) {
       } else {
         p.item = { id: pl.item.id, title: pl.item.title, price: pl.item.price, category: pl.item.category, merchant: pl.item.merchant };
         p.quantity = pl.request.quantity; p.choiceReason = pl.choice.reason;
+        if (pl.choice.note) log(p, 'AI note', pl.choice.note);
         log(p, 'agent chose item', `${pl.item.title} ($${pl.item.price}) via ${pl.choice.source}: ${pl.choice.reason}`);
         const ev = evaluate({ item: pl.item, quantity: p.quantity, policy: state.policy, purchases: state.purchases });
         p.total = ev.total; p.decision = ev.decision; p.reasons = ev.reasons; p.checks = ev.checks;
