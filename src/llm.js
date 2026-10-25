@@ -4,7 +4,7 @@
 // Everything the AI returns is validated and can never change prices or policy.
 // If no provider is configured or the call fails, a rule-based fallback is used, so the app always works.
 
-const { search, byId } = require('./catalog');
+const { search, byId, CATALOG } = require('./catalog');
 
 function provider() { return (process.env.LLM_PROVIDER || '').trim().toLowerCase(); }
 function aiEnabled() {
@@ -136,7 +136,12 @@ async function chooseOption(request, options) {
 
 async function plan(text) {
   const request = await parseRequest(text);
-  const options = search({ query: request.query, maxPrice: request.maxPrice, category: request.category }, 5);
+  // The model's category is only a hint: use it if it exists in the catalog, and widen the search if nothing is found.
+  const known = new Set(CATALOG.map(i => i.category));
+  const cat = request.category && known.has(request.category) ? request.category : null;
+  let options = search({ query: request.query, maxPrice: request.maxPrice, category: cat }, 5);
+  if (!options.length && cat) options = search({ query: request.query, maxPrice: request.maxPrice, category: null }, 5);
+  if (!options.length) options = search({ query: String(text || ''), maxPrice: request.maxPrice, category: null }, 5);
   const choice = await chooseOption(request, options);
   const item = choice ? byId(choice.id) : null;
   return { request, options, choice, item };
