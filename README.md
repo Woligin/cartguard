@@ -44,6 +44,23 @@ With no `.env`, CartGuard runs in **mock mode**: the full flow works (agent, pol
 
 Set `LLM_PROVIDER=gemini` and `GEMINI_API_KEY` (Google AI Studio), or `LLM_PROVIDER=openai-compatible` with `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`. If the model errors or returns something invalid, CartGuard falls back to a rule-based parser, so the app never breaks. The audit trail records which one was used (`source=llm` or `source=rules`).
 
+## How PayPal and AI are used
+
+**PayPal (sandbox, Orders v2 REST API)**
+- `POST /v1/oauth2/token` (client credentials) to authenticate.
+- `POST /v2/checkout/orders` with `intent=CAPTURE` to create an order for exactly the amount the policy engine approved.
+- The buyer approves the order on PayPal's checkout page (`payer-action` link), then PayPal redirects back.
+- `POST /v2/checkout/orders/{id}/capture` captures only the order id CartGuard created and stored; any other id is refused.
+- Without credentials the same flow runs against a local mock, so the project can be tried offline.
+
+**AI (Google Gemini, optional OpenAI-compatible provider)**
+- Runtime: the model turns a plain-language request into structured fields and picks one product among catalog candidates. It is called twice per request and tries several Gemini models in a row if one is busy or retired. If every call fails, a rule-based parser takes over.
+- The model never sets prices and never decides anything about money: it may only return a catalog item id, which is validated, and the deterministic policy engine in `src/policy.js` makes the auto / approval / deny decision.
+- Development: this project was built with the help of an AI coding assistant (Claude by Anthropic). The author directed the design, ran the project, tested it against the PayPal sandbox and reviewed the results.
+
+## Other tools
+Node.js 18+ (built-in `http`, `fetch`, `node:test`), no runtime dependencies.
+
 ## Tests
 
 ```bash
