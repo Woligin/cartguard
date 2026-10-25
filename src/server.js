@@ -24,7 +24,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC = path.join(__dirname, '..', 'public');
 
 function now() { return new Date().toISOString(); }
-function origin(req) { return `http://${req.headers.host || 'localhost:' + PORT}`; }
+function origin(req) { const proto = String(req.headers['x-forwarded-proto'] || 'http').split(',')[0].trim(); return `${proto}://${req.headers.host || 'localhost:' + PORT}`; }
 
 function send(res, code, body, type = 'application/json') {
   res.writeHead(code, { 'Content-Type': type + '; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
